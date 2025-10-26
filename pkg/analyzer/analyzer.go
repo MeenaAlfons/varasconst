@@ -23,6 +23,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	// Export facts for global variables marked with `// const`
 	visitVarsMarkedConst(ins, func(ident *ast.Ident) {
+		if pass.TypesInfo == nil {
+			// just a protection against TypesInfo nil
+			return
+		}
 		varObj := pass.TypesInfo.ObjectOf(ident)
 		if varObj == nil {
 			return
@@ -63,7 +67,10 @@ func checkForViolations(pass *analysis.Pass, lhs ast.Expr) {
 	if !ok {
 		return
 	}
-
+	if pass.TypesInfo == nil {
+		// just a protection against TypesInfo nil
+		return
+	}
 	obj := pass.TypesInfo.ObjectOf(ident)
 	if obj != nil && pass.ImportObjectFact(origin(obj), &VarMarkedConstFact{}) {
 		pass.Reportf(ident.Pos(), "assignment to global variable marked with const: %s", ident.Name)
@@ -80,6 +87,10 @@ func checkForViolationsForSelector(pass *analysis.Pass, selector *ast.SelectorEx
 		return
 	}
 
+	if pass.TypesInfo == nil {
+		// just a protection against TypesInfo nil
+		return
+	}
 	// Check if X is a package name
 	if _, isPkgName := pass.TypesInfo.ObjectOf(firstPartIdent).(*types.PkgName); !isPkgName {
 		// Assignment to a field in local variable or global variable
